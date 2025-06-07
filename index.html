@@ -17,7 +17,7 @@
         <div class="search-bar">
             <input type="text" placeholder="Hi friend, wanna search something?" id="search-input">
             <button type="button" id="search-button" onclick="requestSearchQuery(document.getElementById('search-input').value)">
-                <img src="https://cdn.clippsly.com/brand_assets/svg/search-icon.svg" alt="Search">
+                <img src="https://cdn.clippsly.app/brand_assets/svg/search-icon.svg" alt="Search">
             </button>
             <div class="search-suggestions" id="search-suggestions"></div>
         </div>
@@ -28,16 +28,17 @@
 
         <ul class="dropdown-menu d-none" aria-labelledby="userDropdown" id="user-dropdown-menu">
             <li><a class="dropdown-item" id="profile-link">My Profile</a></li>
-            <li><a class="dropdown-item" id="balance" href="/balance"></a></li>
+            <li><a class="dropdown-item" id="membership" href="/membership">Membership</a></li>
             <li><a class="dropdown-item" href="/upload">Upload</a></li>
-            <li><a class="dropdown-item" href="/manage">Manage</a></li>
+            <li><a class="dropdown-item" href="/messages?page=1">Messages</a></li>
+            <li><a class="dropdown-item"  onclick="openExternalWebsite('https://pre.clippsly.app/manage')">Manage</a></li>
             <li><a class="dropdown-item" href="/settings">Settings</a></li>
             <li><a class="dropdown-item" href="/cliptivity?page=1">Cliptivity</a></li>
             <li><a class="dropdown-item" id="logout-button">Log Out</a></li>
             <hr>
-            <li><a class="dropdown-item open-in-new" onclick="openExternalWebsite('https://support.clippsly.com/')" target=”_blank”>Support</a></li>
-            <li><a class="dropdown-item open-in-new" onclick="openExternalWebsite('https://clippsly.com/terms')" target=”_blank”>Terms of Use</a></li>
-            <li><a class="dropdown-item open-in-new" onclick="openExternalWebsite('https://clippsly.com/privacy')" target=”_blank”>Privacy Policy</a></li>
+            <li><a class="dropdown-item open-in-new" onclick="openExternalWebsite('https://support.clippsly.app/')" target=”_blank”>Support</a></li>
+            <li><a class="dropdown-item open-in-new" onclick="openExternalWebsite('https://clippsly.app/terms')" target=”_blank”>Terms of Use</a></li>
+            <li><a class="dropdown-item open-in-new" onclick="openExternalWebsite('https://clippsly.app/privacy')" target=”_blank”>Privacy Policy</a></li>
         </ul>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -60,10 +61,16 @@
 <script src="/lib/js/page-loaders/load-register-page.js"></script>
 <script src="/lib/js/page-loaders/load-error-page.js"></script>
 <script src="/lib/js/page-loaders/load-moderated-page.js"></script>
-<script src="/lib/js/page-loaders/load-upload-page.js"></script>
+<script src="/lib/js/page-loaders/load-track-upload-page.js"></script>
 <script src="/lib/js/page-loaders/load-cliptivity-page.js"></script>
 <script src="/lib/js/page-loaders/load-settings-page.js"></script>
-<script src="/lib/js/page-loaders/load-balance-page.js"></script>
+<script src="/lib/js/page-loaders/load-membership-page.js"></script>
+<script src="/lib/js/page-loaders/load-about-page.js"></script>
+<script src="/lib/js/page-loaders/load-video-page.js"></script>
+<script src="/lib/js/page-loaders/load-video-upload-page.js"></script>
+<script src="/lib/js/page-loaders/load-upload-view-page.js"></script>
+<script src="/lib/js/page-loaders/load-messages-page.js"></script>
+<script src="/lib/js/page-loaders/load-purchase-page.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         function loadPage(pathname) {
@@ -75,6 +82,9 @@
             } else if (pathname.startsWith('/track/')) {
                 const id = pathname.split('/')[2];
                 visitTrackPage(id);
+            } else if (pathname.startsWith('/video/')) {
+                const id = pathname.split('/')[2];
+                visitVideoPage(id);
             } else if (pathname.startsWith('/search')) {
                 const queryParams = new URLSearchParams(window.location.search);
                 const query = queryParams.get('query');
@@ -83,10 +93,23 @@
                 const errorParams = new URLSearchParams(window.location.search);
                 const code = errorParams.get('code');
                 visitErrorPage(code);
+            } else if (pathname.startsWith('/upload/video')) {
+                visitVideoUploadPage();
+            } else if (pathname.startsWith('/upload/track')) {
+                visitTrackUploadPage();
             } else if (pathname.startsWith('/upload')) {
                 visitUploadPage();
-            } else if (pathname.startsWith('/balance')) {
-                visitBalancePage();
+            } else if (pathname.startsWith('/membership')) {
+                visitMembershipPage();
+            } else if (pathname.startsWith('/about')) {
+                visitAboutPage();
+            } else if (pathname.startsWith('/purchase')) {
+                const purchaseParams = new URLSearchParams(window.location.search);
+                visitPurchasePage(purchaseParams);
+            } else if (pathname.startsWith('/messages')) {
+                const queryParams = new URLSearchParams(window.location.search);
+                const page = queryParams.get('page');
+                loadSystemMessagesPage(page);
             } else if (pathname.startsWith('/cliptivity')) {
                 const queryParams = new URLSearchParams(window.location.search);
                 const page = queryParams.get('page');
@@ -134,7 +157,7 @@
         </div>
     </div>
     <div class="player-controls">
-        <button id="play-pause-btn" class="play-pause-btn"><img src="https://cdn.clippsly.com/brand_assets/controls/play.png" alt="Play"></button>
+        <button id="play-pause-btn" class="play-pause-btn"><img src="https://cdn.clippsly.app/brand_assets/controls/play.png" alt="Play"></button>
         <span id="current-time" class="current-time">0:00</span>
         <input type="range" id="progress-slider" class="progress-slider" min="0" max="100" value="0" disabled>
         <span id="total-time" class="total-time">xx:xx</span>
@@ -144,5 +167,43 @@
     </div>
 </div>
 
+<div id="cookie-banner" class="cookie-banner d-none">
+    <div class="cookie-text">
+        We use cookies to enhance your experience. Read our 
+        <a href="https://support.clippsly.app/knowledgebase.php?article=9" target="_blank">Cookie Policy</a>.
+    </div>
+    <button id="accept-cookies" class="btn btn-primary btn-sm ml-3">Accept</button>
+</div>
+
 </body>
+
+<script>
+    function storeConsentCookieGlobally(cookieName, cookieValue, daysValid) {
+        const expires = new Date(Date.now() + daysValid * 864e5).toUTCString();
+        const domain = '.clippsly.app';
+        document.cookie = `${cookieName}=${encodeURIComponent(cookieValue)}; expires=${expires}; path=/; domain=${domain}; SameSite=Lax; Secure`;
+    }
+
+    function retrieveCookieValue(cookieName) {
+        return document.cookie
+            .split('; ')
+            .find(row => row.startsWith(cookieName + '='))
+            ?.split('=')[1];
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const banner = document.getElementById('cookie-banner');
+        const consentGiven = retrieveCookieValue('cookiesAccepted');
+
+        if (!consentGiven) {
+            banner.classList.remove('d-none');
+        }
+
+        document.getElementById('accept-cookies').addEventListener('click', () => {
+            storeConsentCookieGlobally('cookiesAccepted', 'true', 365);
+            banner.classList.add('d-none');
+        });
+    });
+</script>
+
 </html>
